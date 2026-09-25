@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+raj_art.db
+.env
+.DS_Store
