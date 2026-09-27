@@ -8,6 +8,7 @@ class CalculateRequest(BaseModel):
     quantity: int
     printing_side: str  # "Single Side" | "Double Side"
     lamination: str  # "None" | "Gloss" | "Matte" | "Velvet"
+    sheet_size: str = "A3"  # "A3" | "A4" | "A5"
     use_nearest_quantity: bool = True
 
 
@@ -16,6 +17,7 @@ class CalculateResponse(BaseModel):
     quantity: int
     printing_side: str
     lamination: str
+    sheet_size: str
 
     rate_quantity_used: int
     used_nearest_quantity: bool
@@ -51,6 +53,7 @@ class OrderOut(BaseModel):
     quantity: int
     printing_side: str
     lamination: str
+    sheet_size: str
 
     rate_quantity_used: int
     used_nearest_quantity: bool
@@ -71,3 +74,4 @@ class RateOptions(BaseModel):
     printing_sides: list[str]
     lamination_options: list[str]
     quantity_brackets: list[int]
+    sheet_size_options: list[str]

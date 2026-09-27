@@ -18,6 +18,7 @@ class Order(Base):
     quantity = Column(Integer, nullable=False)
     printing_side = Column(String, nullable=False)
     lamination = Column(String, nullable=False)
+    sheet_size = Column(String, nullable=False, default="A3")
 
     rate_quantity_used = Column(Integer, nullable=False)
     used_nearest_quantity = Column(Boolean, default=False)

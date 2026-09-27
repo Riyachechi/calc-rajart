@@ -44,6 +44,7 @@ def calculate(payload: schemas.CalculateRequest):
             quantity=payload.quantity,
             printing_side=payload.printing_side,
             lamination=payload.lamination,
+            sheet_size=payload.sheet_size,
             use_nearest_quantity=payload.use_nearest_quantity,
         )
     except ValueError as exc:
@@ -63,6 +64,7 @@ def create_order(payload: schemas.OrderCreate, db: Session = Depends(get_db)):
             quantity=payload.quantity,
             printing_side=payload.printing_side,
             lamination=payload.lamination,
+            sheet_size=payload.sheet_size,
             use_nearest_quantity=payload.use_nearest_quantity,
         )
     except ValueError as exc:
@@ -76,6 +78,7 @@ def create_order(payload: schemas.OrderCreate, db: Session = Depends(get_db)):
         quantity=result["quantity"],
         printing_side=result["printing_side"],
         lamination=result["lamination"],
+        sheet_size=result["sheet_size"],
         rate_quantity_used=result["rate_quantity_used"],
         used_nearest_quantity=result["used_nearest_quantity"],
         printing_min=result["printing_min"],
@@ -135,7 +138,7 @@ def export_orders_csv(db: Session = Depends(get_db)):
     writer.writerow(
         [
             "ID", "Date", "Customer Name", "Phone", "GSM", "Quantity",
-            "Printing Side", "Lamination", "Rate Bracket Used",
+            "Sheet Size", "Printing Side", "Lamination", "Rate Bracket Used",
             "Used Nearest?", "Final Min/Piece", "Final Max/Piece",
             "Total Min", "Total Max", "Notes",
         ]
@@ -144,8 +147,9 @@ def export_orders_csv(db: Session = Depends(get_db)):
         writer.writerow(
             [
                 o.id, o.created_at, o.customer_name, o.customer_phone, o.gsm,
-                o.quantity, o.printing_side, o.lamination, o.rate_quantity_used,
-                o.used_nearest_quantity, o.final_min_per_piece, o.final_max_per_piece,
+                o.quantity, o.sheet_size, o.printing_side, o.lamination,
+                o.rate_quantity_used, o.used_nearest_quantity,
+                o.final_min_per_piece, o.final_max_per_piece,
                 o.total_min, o.total_max, o.notes,
             ]
         )

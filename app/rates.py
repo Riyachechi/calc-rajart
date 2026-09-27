@@ -10,6 +10,17 @@ DATA_FILE = Path(__file__).parent / "data" / "Sorted_Sheet_Rates_For_Dashboard.x
 
 LAMINATION_OPTIONS = ["None", "Gloss", "Matte", "Velvet"]
 
+# All rates in the sheet are for a full A3 sheet (12x18"). A4 is exactly
+# half of an A3 sheet, and A5 is exactly a quarter of an A3 sheet (four
+# A5 pieces come out of one A3), so their per-piece printing price is the
+# A3 rate scaled down by that fraction.
+SHEET_SIZE_OPTIONS = ["A3", "A4", "A5"]
+SHEET_SIZE_MULTIPLIERS = {
+    "A3": 1.0,
+    "A4": 0.5,
+    "A5": 0.25,
+}
+
 
 class RateBook:
     """Loads the rate workbook once and answers pricing questions."""
@@ -42,6 +53,7 @@ class RateBook:
             "printing_sides": sorted(self.rates_df["Printing Side"].unique().tolist()),
             "lamination_options": LAMINATION_OPTIONS,
             "quantity_brackets": sorted(self.rates_df["Quantity"].unique().tolist()),
+            "sheet_size_options": SHEET_SIZE_OPTIONS,
         }
 
     # ---------------------------------------------------------------
@@ -58,7 +70,7 @@ class RateBook:
         return float(result.iloc[0]["Lamination Price (₹)"])
 
     # ---------------------------------------------------------------
-    # Printing rate lookup (with nearest-quantity fallback)
+    # Printing rate lookup (quantity-bracket fallback)
     # ---------------------------------------------------------------
     def find_printing_rate(
         self,
@@ -81,12 +93,24 @@ class RateBook:
             if not available:
                 return pd.DataFrame(), quantity, False
 
-            nearest = min(available, key=lambda q: abs(q - quantity))
+            # The rows in the sheet are quantity brackets (100 / 500 / 1000
+            # / 5000 pieces), each with its own per-piece rate that gets
+            # cheaper as the bracket goes up. You only unlock a bracket's
+            # rate once you actually reach that many pieces, so an order
+            # that doesn't match a bracket exactly (e.g. 105, 250, 499
+            # pieces) is priced at the highest bracket it has REACHED, not
+            # the next one up.
+            # e.g. 105 pieces -> still priced at the 100-piece bracket's
+            # rate (hasn't reached 500 yet). 750 pieces -> priced at the
+            # 500-piece bracket's rate (hasn't reached 1000 yet).
+            reached_brackets = [q for q in available if q <= quantity]
+            bracket = max(reached_brackets) if reached_brackets else min(available)
+
             selected = gsm_rates[
-                (gsm_rates["Quantity"] == nearest)
+                (gsm_rates["Quantity"] == bracket)
                 & (gsm_rates["Printing Side"] == printing_side)
             ]
-            return selected, nearest, True
+            return selected, bracket, True
 
         return pd.DataFrame(), quantity, False
 
@@ -99,8 +123,15 @@ class RateBook:
         quantity: int,
         printing_side: str,
         lamination: str,
+        sheet_size: str = "A3",
         use_nearest_quantity: bool = True,
     ) -> dict:
+        if sheet_size not in SHEET_SIZE_MULTIPLIERS:
+            raise ValueError(
+                f"Unknown sheet size '{sheet_size}'. Choose one of "
+                f"{', '.join(SHEET_SIZE_OPTIONS)}."
+            )
+
         selected_rate, rate_quantity_used, used_nearest = self.find_printing_rate(
             gsm, quantity, printing_side, use_nearest_quantity
         )
@@ -111,8 +142,10 @@ class RateBook:
                 "printing type."
             )
 
-        printing_min = float(selected_rate.iloc[0]["Min Selling Price (₹)"])
-        printing_max = float(selected_rate.iloc[0]["Max Selling Price (₹)"])
+        # Base rates in the sheet are always for a full A3 sheet.
+        size_multiplier = SHEET_SIZE_MULTIPLIERS[sheet_size]
+        printing_min = float(selected_rate.iloc[0]["Min Selling Price (₹)"]) * size_multiplier
+        printing_max = float(selected_rate.iloc[0]["Max Selling Price (₹)"]) * size_multiplier
 
         lamination_price = self.get_lamination_price(lamination, printing_side)
 
@@ -127,6 +160,7 @@ class RateBook:
             "quantity": quantity,
             "printing_side": printing_side,
             "lamination": lamination,
+            "sheet_size": sheet_size,
             "rate_quantity_used": int(rate_quantity_used),
             "used_nearest_quantity": bool(used_nearest),
             "printing_min": printing_min,
