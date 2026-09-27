@@ -74,6 +74,11 @@ async function loadOptions() {
   lamSelect.innerHTML = opts.lamination_options
     .map((l) => `<option value="${l}">${l}</option>`)
     .join("");
+
+  const sizeSelect = document.getElementById("sheet_size");
+  sizeSelect.innerHTML = opts.sheet_size_options
+    .map((s) => `<option value="${s}">${s}</option>`)
+    .join("");
 }
 
 // ---------------------------------------------------------------
@@ -86,6 +91,7 @@ function readForm() {
     quantity: parseInt(document.getElementById("quantity").value, 10),
     printing_side: printingSide ? printingSide.value : null,
     lamination: document.getElementById("lamination").value,
+    sheet_size: document.getElementById("sheet_size").value,
     use_nearest_quantity: document.getElementById("use_nearest").checked,
   };
 }
@@ -136,13 +142,13 @@ function renderResult(r) {
   const warn = document.getElementById("nearest-warning");
   if (r.used_nearest_quantity) {
     warn.hidden = false;
-    warn.textContent = `No exact rate for ${r.quantity.toLocaleString("en-IN")} pieces — nearest bracket used: ${r.rate_quantity_used.toLocaleString("en-IN")} pieces.`;
+    warn.textContent = `No exact rate row for ${r.quantity.toLocaleString("en-IN")} pieces — priced using the ${r.rate_quantity_used.toLocaleString("en-IN")}-piece bracket rate, applied to your actual quantity.`;
   } else {
     warn.hidden = true;
   }
 
   document.getElementById("result-context").textContent =
-    `${r.quantity.toLocaleString("en-IN")} pieces · ${r.gsm} GSM · ${r.printing_side} · ${r.lamination} lamination`;
+    `${r.quantity.toLocaleString("en-IN")} pieces · ${r.sheet_size} · ${r.gsm} GSM · ${r.printing_side} · ${r.lamination} lamination`;
 
   document.getElementById("total-min").textContent = money(r.total_min);
   document.getElementById("total-max").textContent = money(r.total_max);
@@ -151,6 +157,7 @@ function renderResult(r) {
   document.getElementById("ppc-qty").textContent = r.quantity.toLocaleString("en-IN");
 
   const rows = [
+    ["Sheet size", r.sheet_size],
     ["Printing minimum per piece", money(r.printing_min)],
     ["Printing maximum per piece", money(r.printing_max)],
     ["Lamination per piece", money(r.lamination_price)],
@@ -176,6 +183,9 @@ ${customerName || "Not Specified"}
 
 GSM:
 ${r.gsm} GSM
+
+Sheet Size:
+${r.sheet_size}
 
 Quantity:
 ${r.quantity.toLocaleString("en-IN")} Pieces
@@ -285,6 +295,7 @@ async function loadOrders(search = "") {
           <td>${o.customer_name || "—"}</td>
           <td>${o.customer_phone || "—"}</td>
           <td>${o.gsm}</td>
+          <td>${o.sheet_size || "A3"}</td>
           <td>${o.quantity.toLocaleString("en-IN")}</td>
           <td>${o.printing_side}</td>
           <td>${o.lamination}</td>

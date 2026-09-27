@@ -51,6 +51,11 @@
           </label>
 
           <label class="field">
+            <span>Sheet size</span>
+            <select id="sheet_size"></select>
+          </label>
+
+          <label class="field">
             <span>Pieces</span>
             <input type="number" id="quantity" min="1" value="100" />
           </label>
@@ -68,7 +73,7 @@
 
         <label class="checkbox-field">
           <input type="checkbox" id="use_nearest" checked />
-          <span>Use nearest quantity bracket if exact match isn't in the rate table</span>
+          <span>Use the correct pricing bracket if exact quantity isn't in the rate table</span>
         </label>
 
         <label class="field">
@@ -152,6 +157,7 @@
               <th>Customer</th>
               <th>Phone</th>
               <th>GSM</th>
+              <th>Size</th>
               <th>Qty</th>
               <th>Printing</th>
               <th>Lamination</th>
