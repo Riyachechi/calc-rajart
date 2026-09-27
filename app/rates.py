@@ -142,12 +142,14 @@ class RateBook:
                 "printing type."
             )
 
-        # Base rates in the sheet are always for a full A3 sheet.
+        # Base rates in the sheet are always for a full A3 sheet — printing
+        # AND lamination both scale down with a smaller sheet, since a
+        # smaller piece needs proportionally less ink/laminate film.
         size_multiplier = SHEET_SIZE_MULTIPLIERS[sheet_size]
         printing_min = float(selected_rate.iloc[0]["Min Selling Price (₹)"]) * size_multiplier
         printing_max = float(selected_rate.iloc[0]["Max Selling Price (₹)"]) * size_multiplier
 
-        lamination_price = self.get_lamination_price(lamination, printing_side)
+        lamination_price = self.get_lamination_price(lamination, printing_side) * size_multiplier
 
         final_min_per_piece = printing_min + lamination_price
         final_max_per_piece = printing_max + lamination_price
